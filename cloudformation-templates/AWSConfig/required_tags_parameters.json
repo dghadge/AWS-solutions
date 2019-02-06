@@ -1,0 +1,30 @@
+[
+  {
+    "ParameterKey": "tag1Key",
+    "ParameterValue": "Project"
+  },
+  {
+    "ParameterKey": "tag2Key",
+    "ParameterValue": "DeleteAfter"
+  },
+  {
+    "ParameterKey": "tag3Key",
+    "ParameterValue": "Environment"
+  },
+  {
+    "ParameterKey": "tag4Key",
+    "ParameterValue": "CostCode"
+  },
+  {
+    "ParameterKey": "tag4Value",
+    "ParameterValue": "US028"
+  },
+  {
+    "ParameterKey": "tag5Key",
+    "ParameterValue": "LegalEntity"
+  },
+  {
+    "ParameterKey": "tag6Key",
+    "ParameterValue": "Service"
+  }
+]

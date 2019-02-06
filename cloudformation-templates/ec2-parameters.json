@@ -1,0 +1,30 @@
+[
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Dan Ghadge"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "Informagic"
+  },
+  {
+    "ParameterKey": "DeleteAfter",
+    "ParameterValue": "Never"
+  },
+  {
+    "ParameterKey": "Ec2KeyPair",
+    "ParameterValue": "danghadge-informagicProd-useast-1"
+  },
+  {
+    "ParameterKey": "EBSVolumeSize",
+    "ParameterValue": "50"
+  },
+  {
+    "ParameterKey": "PrivateSubnets",
+    "ParameterValue": "subnet-fff2ddb4,subnet-3766fc6a,subnet-dd3168b9"
+  },
+  {
+    "ParameterKey": "VPCID",
+    "ParameterValue": "vpc-00040678"
+  }
+]

@@ -1,0 +1,27 @@
+{
+   "Schedules": [
+      {
+         "RetainRunning": false, 
+         "Enforced": false, 
+         "Name": "tn-web-office-hours", 
+         "StopNewInstances": true, 
+         "Periods": [
+            "tn-wednesdays", 
+            "tn-nonwednesdays"
+         ], 
+         "Timezone": "US/Central", 
+         "Type": "schedule"
+      }, 
+      {
+         "RetainRunning": false, 
+         "Enforced": false, 
+         "Name": "wp-office-hours-schedule", 
+         "StopNewInstances": true, 
+         "Periods": [
+            "wp-office-hours"
+         ], 
+         "Timezone": "US/Eastern", 
+         "Type": "schedule"
+      }
+   ]
+}

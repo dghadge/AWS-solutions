@@ -1,0 +1,1118 @@
+{
+    "Description": "Template to deploy Elastic Beanstalk application from S3. This template is designed to run after parent template to create vpc and subnets is run (default name of parent template is vpc-and-subnet.json).",
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "Owner": {
+            "Description": "Enter Team or Individual Name Responsible for the Stack.",
+            "Type": "String",
+            "Default": "FirstName LastName"
+        },
+        "Project": {
+            "Description": "Enter Project Name.",
+            "Type": "String",
+            "Default": "IFI Development"
+        },
+        "DeleteAfter": {
+            "Description": "Enter Date (MM/DD/YYYY). It's Ok to Delete the Stack or 'Never' if meant to be persistent.",
+            "Type": "String",
+            "Default": "00/00/201x"
+        },
+        "CreateApplication": {
+            "Description": "Select true to create new application or false to create a new environment within an existing application.",
+            "Type": "String",
+            "AllowedValues": [
+                "true",
+                "false"
+            ]
+        },
+        "ApplicationName": {
+            "Description": "Enter Application Name. Must exist if true is selected in CreateApplication parameter",
+            "Type": "String",
+            "AllowedPattern": "^[a-zA-Z0-9]*$",
+            "ConstraintDescription": "Can contain only ASCII characters."
+        },
+        "EnvironmentName": {
+            "Description": "Enter Environment Name.",
+            "Type": "String",
+            "AllowedPattern": "[\\x20-\\x7E]*",
+            "ConstraintDescription": "Can contain only ASCII characters."
+        },
+        "SolutionStackName": {
+            "Type": "String",
+            "Description": "Solution Stack Name to deploy this application. (eg. 64bit Windows Server Core 2016 v1.2.0 running IIS 10.0)",
+            "AllowedPattern": "[\\x20-\\x7E]*",
+            "Default": "64bit Windows Server 2016 v1.2.0 running IIS 10.0",
+            "ConstraintDescription": "Can contain only ASCII characters."
+        },
+        "S3Bucket": {
+            "Type": "String",
+            "Description": "S3 bucket which holds the application code.",
+            "AllowedPattern": "[\\x20-\\x7E]*",
+            "ConstraintDescription": "Can contain only ASCII characters."
+        },
+        "S3Key": {
+            "Type": "String",
+            "Description": "Object name in S3 bucket(application code zip).",
+            "AllowedPattern": "[\\x20-\\x7E]*",
+            "ConstraintDescription": "Can contain only ASCII characters."
+        },
+        "EC2KeyName": {
+            "Description": "Name of your EC2 key pair",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "EC2NewName": {
+            "Description": "Name of your EC2 instance",
+            "Type": "String"
+        },
+        "InstanceSecurityGroupNames": {
+            "Description": "Comma separated name of your EC2 instance security groups",
+            "Type": "String"
+        },
+        "ELBSecurityGroupNames": {
+            "Description": "Comma separated name of your ELB security groups",
+            "Type": "String"
+        },
+        "AMIID": {
+            "Description": "AMI ID to launch the EC2 instance",
+            "Type": "String"
+        },
+        "SSLCertificateARN": {
+            "Description": "SSL certificateID ARN from AWS ACM",
+            "Type": "String"
+        },
+        "VPCID": {
+            "Description": "Id of VPC that will be used in to create this application.",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "DMZSubnets": {
+            "Description": "Name of DMZ Subnets. This is where ELB will reside",
+            "Type": "List<AWS::EC2::Subnet::Id>"
+        },
+        "PublicOrPrivateSubnets": {
+            "Description": "Name of Public Subnets. This is where ec2 instances will reside",
+            "Type": "List<AWS::EC2::Subnet::Id>"
+        },
+        "ConfigureDns": {
+            "Description": "Configure Route 53 DNS Alias for Elastic BeanStalk Environment? Be sure a matching record doesn't already exist.",
+            "Type": "String",
+            "Default": "false",
+            "AllowedValues": [
+                "true",
+                "false"
+            ]
+        },
+        "R53HostedZoneID": {
+            "Description": "(Enter only if Configuring Route 53) Hosted DNS Name.",
+            "Type": "String",
+            "Default": "op.informais.com"
+        },
+        "R53AliasNames": {
+            "Description": "(Enter only if Configuring Route 53) Hosted DNS Name.",
+            "Type": "String",
+            "Default": "NONE,NONE,NONE,NONE"
+        }
+    },
+    "Conditions": {
+        "ConfigureAliasRec0": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Fn::Select": [
+                                "0",
+                                {
+                                    "Fn::Split": [
+                                        ",",
+                                        {
+                                            "Ref": "R53AliasNames"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "NONE"
+                    ]
+                }
+            ]
+        },
+        "ConfigureAliasRec1": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Fn::Select": [
+                                "1",
+                                {
+                                    "Fn::Split": [
+                                        ",",
+                                        {
+                                            "Ref": "R53AliasNames"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "NONE"
+                    ]
+                }
+            ]
+        },
+        "ConfigureAliasRec2": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Fn::Select": [
+                                "2",
+                                {
+                                    "Fn::Split": [
+                                        ",",
+                                        {
+                                            "Ref": "R53AliasNames"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "NONE"
+                    ]
+                }
+            ]
+        },
+        "ConfigureAliasRec3": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Fn::Select": [
+                                "3",
+                                {
+                                    "Fn::Split": [
+                                        ",",
+                                        {
+                                            "Ref": "R53AliasNames"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "NONE"
+                    ]
+                }
+            ]
+        },
+        "ConfigureRoute53": {
+            "Fn::Equals": [
+                {
+                    "Ref": "ConfigureDns"
+                },
+                "true"
+            ]
+        },
+        "CreateNewApplication": {
+            "Fn::Equals": [
+                {
+                    "Ref": "CreateApplication"
+                },
+                "true"
+            ]
+        }
+    },
+    "Mappings": {
+        "BeanstalkToALBHostedZoneId": {
+            "us-east-1": {
+                "HostedZoneId": "Z35SXDOTRQ7X7K"
+            },
+            "us-east-2": {
+                "HostedZoneId": "Z3AADJGX6KTTL2"
+            },
+            "us-west-1": {
+                "HostedZoneId": "Z368ELLRRE2KJ0"
+            },
+            "us-west-2": {
+                "HostedZoneId": "Z1H1FL5HABSF5"
+            }
+        }
+    },
+    "Resources": {
+        "RemoveEC2FromDomainFunction": {
+            "Type": "AWS::Lambda::Function",
+            "DeletionPolicy" : "Retain",
+            "Properties": {
+                "Handler": "index.lambda_handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "import boto3\n",
+                                "import logging\n",
+                                "import time\n",
+                                "import json\n",
+                                "\n",
+                                "def lambda_handler(event, context):\n",
+                                "    print(json.dumps(event))\n",
+                                "    message = json.loads(event['Records'][0]['Sns']['Message'])\n",
+                                "    instanceId = message[\"EC2InstanceId\"]\n",
+                                "    print(\"instanceId=\"+instanceId)\n",
+                                "    ssmClient = boto3.client('ssm')\n",
+                                "    ssmCommand = ssmClient.send_command(\n",
+                                "        InstanceIds = [instanceId],\n",
+                                "        DocumentName = 'AWS-RunPowerShellScript',\n",
+                                "        TimeoutSeconds = 270,\n",
+                                "        Parameters={'commands': ['.\\\\remove-application-instance-from-domain.ps1'],\n",
+                                "                     \"executionTimeout\": ['3600'],\n",
+                                "                     \"workingDirectory\": ['D:\\\\\\\\DSC\\\\\\\\dsc-scripts']}\n",
+                                "    )\n",
+                                "\n",
+                                "    print(ssmCommand['Command']['CommandId'])\n",
+                                "\n",
+                                "    status = ssmCommand['Command']['Status']\n",
+                                "\n",
+                                "    while status == 'Pending' or status == 'InProgress': \n",
+                                "        time.sleep(3)\n",
+                                "        status = (ssmClient.list_commands(CommandId=ssmCommand['Command']['CommandId']))['Commands'][0]['Status']\n",
+                                "\n",
+                                "    actionResult = \"CONTINUE\"\n",
+                                "    if (status != 'Success'):\n",
+                                "        actionResult = \"ABANDON\"\n",
+                                "\n",
+                                "    asgClient = boto3.client('autoscaling')\n",
+                                "    lifeCycleHook = message['LifecycleHookName']\n",
+                                "    autoScalingGroup = message['AutoScalingGroupName']\n",
+                                "    response = asgClient.complete_lifecycle_action(\n",
+                                "        LifecycleHookName = lifeCycleHook,\n",
+                                "        AutoScalingGroupName = autoScalingGroup,\n",
+                                "        LifecycleActionResult = actionResult,\n",
+                                "        InstanceId = instanceId\n",
+                                "    )\n",
+                                "\n",
+                                "    print(json.dumps(response))\n",
+                                "    return None\n"
+                            ]
+                        ]
+                    }
+                },
+                "Runtime": "python2.7",
+                "Timeout": "30"
+            }
+        },
+        "SNSTopic": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+                "Subscription": [
+                    {
+                        "Endpoint": {
+                            "Fn::GetAtt": [
+                                "RemoveEC2FromDomainFunction",
+                                "Arn"
+                            ]
+                        },
+                        "Protocol": "lambda"
+                    }
+                ]
+            },
+            "DependsOn": [
+                "RemoveEC2FromDomainFunction"
+            ]
+        },
+        "LambdaInvokePermission": {
+            "Type": "AWS::Lambda::Permission",
+            "DeletionPolicy" : "Retain",
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "Principal": "sns.amazonaws.com",
+                "SourceArn": {
+                    "Ref": "SNSTopic"
+                },
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "RemoveEC2FromDomainFunction",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "DeletionPolicy" : "Retain",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "lambdaExecutionPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:*"
+                                    ],
+                                    "Resource": "arn:aws:logs:*:*:*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ssm:SendCommand",
+                                        "ssm:ListCommands",
+                                        "autoscaling:CompleteLifecycleAction"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "ElasticBeanstalkRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com",
+                                    "elasticbeanstalk.amazonaws.com",
+                                    "autoscaling.amazonaws.com",
+                                    "ssm.amazonaws.com"
+                                ]
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier",
+                    "arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkService",
+                    "arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth",
+                    "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
+                    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+                    "arn:aws:iam::aws:policy/AmazonSSMFullAccess",
+                    "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser"
+                ],
+                "Policies": [
+                    {
+                        "PolicyName": "ElasticBeanstalkInlinePolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ssm:DescribeParameters",
+                                        "ssm:GetParameter",
+                                        "ssm:GetParameters",
+                                        "sqs:SendMessage",
+                                        "sqs:GetQueueUrl",
+                                        "sns:Publish"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "EBInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "ElasticBeanstalkRole"
+                    }
+                ]
+            }
+        },
+        "Application": {
+            "Type": "AWS::ElasticBeanstalk::Application",
+            "Condition": "CreateNewApplication",
+            "Properties": {
+                "Description": "Informa AWS Elastic Beanstalk Application",
+                "ApplicationName": {
+                    "Ref": "ApplicationName"
+                }
+            }
+        },
+        "ApplicationVersion": {
+            "Type": "AWS::ElasticBeanstalk::ApplicationVersion",
+            "Properties": {
+                "ApplicationName": {
+                    "Fn::If": [
+                        "CreateNewApplication",
+                        {
+                            "Ref": "Application"
+                        },
+                        {
+                            "Ref": "ApplicationName"
+                        }
+                    ]
+                },
+                "Description": "Informa AWS Elastic Beanstalk Application Version",
+                "SourceBundle": {
+                    "S3Bucket": {
+                        "Ref": "S3Bucket"
+                    },
+                    "S3Key": {
+                        "Ref": "S3Key"
+                    }
+                }
+            }
+        },
+        "ConfigurationTemplate": {
+            "Type": "AWS::ElasticBeanstalk::ConfigurationTemplate",
+            "Properties": {
+                "ApplicationName": {
+                    "Fn::If": [
+                        "CreateNewApplication",
+                        {
+                            "Ref": "Application"
+                        },
+                        {
+                            "Ref": "ApplicationName"
+                        }
+                    ]
+                },
+                "Description": "Informa AWS Elastic Beanstalk Application Configuration Template",
+                "OptionSettings": [
+                    {
+                        "Namespace": "aws:autoscaling:asg",
+                        "OptionName": "Availability Zones",
+                        "Value": "Any 2"
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:asg",
+                        "OptionName": "MaxSize",
+                        "Value": "2"
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:asg",
+                        "OptionName": "MinSize",
+                        "Value": "1"
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:launchconfiguration",
+                        "OptionName": "EC2KeyName",
+                        "Value": {
+                            "Ref": "EC2KeyName"
+                        }
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:launchconfiguration",
+                        "OptionName": "IamInstanceProfile",
+                        "Value": {
+                            "Ref": "EBInstanceProfile"
+                        }
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:launchconfiguration",
+                        "OptionName": "ImageId",
+                        "Value": {
+                            "Ref": "AMIID"
+                        }
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:launchconfiguration",
+                        "OptionName": "InstanceType",
+                        "Value": "t2.medium"
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:launchconfiguration",
+                        "OptionName": "SecurityGroups",
+                        "Value": {
+                            "Ref": "InstanceSecurityGroupNames"
+                        }
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:updatepolicy:rollingupdate",
+                        "OptionName": "RollingUpdateEnabled",
+                        "Value": "true"
+                    },
+                    {
+                        "Namespace": "aws:ec2:vpc",
+                        "OptionName": "AssociatePublicIpAddress",
+                        "Value": "false"
+                    },
+                    {
+                        "Namespace": "aws:ec2:vpc",
+                        "OptionName": "ELBScheme",
+                        "Value": "internal"
+                    },
+                    {
+                        "Namespace": "aws:ec2:vpc",
+                        "OptionName": "ELBSubnets",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Fn::Select": [
+                                            "0",
+                                            {
+                                                "Ref": "DMZSubnets"
+                                            }
+                                        ]
+                                    },
+                                    ", ",
+                                    {
+                                        "Fn::Select": [
+                                            "1",
+                                            {
+                                                "Ref": "DMZSubnets"
+                                            }
+                                        ]
+                                    },
+                                    ", ",
+                                    {
+                                        "Fn::Select": [
+                                            "2",
+                                            {
+                                                "Ref": "DMZSubnets"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Namespace": "aws:ec2:vpc",
+                        "OptionName": "Subnets",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Fn::Select": [
+                                            "0",
+                                            {
+                                                "Ref": "PublicOrPrivateSubnets"
+                                            }
+                                        ]
+                                    },
+                                    ", ",
+                                    {
+                                        "Fn::Select": [
+                                            "1",
+                                            {
+                                                "Ref": "PublicOrPrivateSubnets"
+                                            }
+                                        ]
+                                    },
+                                    ", ",
+                                    {
+                                        "Fn::Select": [
+                                            "2",
+                                            {
+                                                "Ref": "PublicOrPrivateSubnets"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Namespace": "aws:ec2:vpc",
+                        "OptionName": "VPCId",
+                        "Value": {
+                            "Ref": "VPCID"
+                        }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:command",
+                        "OptionName": "Timeout",
+                        "Value": "3600"
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:environment",
+                        "OptionName": "LoadBalancerType",
+                        "Value": "application"
+                    },
+                    {
+                        "Namespace": "aws:elbv2:listener:default",
+                        "OptionName": "ListenerEnabled",
+                        "Value": "false"
+                    },
+                    {
+                        "Namespace": "aws:elbv2:listener:443",
+                        "OptionName": "DefaultProcess",
+                        "Value": "https"
+                    },
+                    {
+                        "Namespace": "aws:elbv2:listener:443",
+                        "OptionName": "ListenerEnabled",
+                        "Value": "true"
+                    },
+                    {
+                        "Namespace": "aws:elbv2:listener:443",
+                        "OptionName": "Protocol",
+                        "Value": "HTTPS"
+                    },
+                    {
+                        "Namespace": "aws:elbv2:listener:443",
+                        "OptionName": "SSLCertificateArns",
+                        "Value": {
+                            "Ref": "SSLCertificateARN"
+                        }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:environment:process:https",
+                        "OptionName": "Port",
+                        "Value": "443"
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:environment:process:https",
+                        "OptionName": "Protocol",
+                        "Value": "HTTPS"
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:environment:process:https",
+                        "OptionName": "MatcherHTTPCode",
+                        "Value": "200,404"
+                    }
+                ],
+                "SolutionStackName": {
+                    "Ref": "SolutionStackName"
+                }
+            }
+        },
+        "Environment": {
+            "Type": "AWS::ElasticBeanstalk::Environment",
+            "DependsOn": [
+                "ConfigurationTemplate"
+            ],
+            "Properties": {
+                "ApplicationName": {
+                    "Ref": "ApplicationName"
+                },
+                "Description": "AWS ElasticBeanstalk  Environment",
+                "CNAMEPrefix": {
+                    "Ref": "EnvironmentName"
+                },
+                "EnvironmentName": {
+                    "Ref": "EnvironmentName"
+                },
+                "TemplateName": {
+                    "Ref": "ConfigurationTemplate"
+                },
+                "VersionLabel": {
+                    "Ref": "ApplicationVersion"
+                },
+                "OptionSettings": [
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "NEWNAME",
+                        "Value": {
+                            "Ref": "EC2NewName"
+                        }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:customoption",
+                        "OptionName": "SNSTopic",
+                        "Value": {
+                            "Ref": "SNSTopic"
+                        }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:customoption",
+                        "OptionName": "ElasticBeanstalkRoleARN",
+                        "Value": {
+                            "Fn::GetAtt": [
+                                "ElasticBeanstalkRole",
+                                "Arn"
+                            ]
+                        }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:customoption",
+                        "OptionName": "ElasticBeanstalkRole",
+                        "Value": {
+                            "Ref": "ElasticBeanstalkRole"
+                        }
+                    }
+                ]
+            }
+        },
+        "RecordSet0": {
+            "Condition": "ConfigureRoute53",
+            "Type": "AWS::Route53::RecordSet",
+            "DependsOn": "Environment",
+            "Properties": {
+                "AliasTarget": {
+                    "DNSName": {
+                        "Fn::GetAtt": [
+                            "Environment",
+                            "EndpointURL"
+                        ]
+                    },
+                    "HostedZoneId": {
+                        "Fn::FindInMap": [
+                            "BeanstalkToALBHostedZoneId",
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            "HostedZoneId"
+                        ]
+                    }
+                },
+                "HostedZoneId": {
+                    "Ref": "R53HostedZoneID"
+                },
+                "Name": {
+                    "Fn::If": [
+                        "ConfigureAliasRec0",
+                        {
+                            "Fn::Select": [
+                                "0",
+                                {
+                                    "Fn::Split": [
+                                        ",",
+                                        {
+                                            "Ref": "R53AliasNames"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "Type": "A"
+            }
+        },
+        "RecordSet1": {
+            "Condition": "ConfigureRoute53",
+            "Type": "AWS::Route53::RecordSet",
+            "DependsOn": "Environment",
+            "Properties": {
+                "AliasTarget": {
+                    "DNSName": {
+                        "Fn::GetAtt": [
+                            "Environment",
+                            "EndpointURL"
+                        ]
+                    },
+                    "HostedZoneId": {
+                        "Fn::FindInMap": [
+                            "BeanstalkToALBHostedZoneId",
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            "HostedZoneId"
+                        ]
+                    }
+                },
+                "HostedZoneId": {
+                    "Ref": "R53HostedZoneID"
+                },
+                "Name": {
+                    "Fn::If": [
+                        "ConfigureAliasRec1",
+                        {
+                            "Fn::Select": [
+                                "1",
+                                {
+                                    "Fn::Split": [
+                                        ",",
+                                        {
+                                            "Ref": "R53AliasNames"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "Type": "A"
+            }
+        },
+        "RecordSet2": {
+            "Condition": "ConfigureRoute53",
+            "Type": "AWS::Route53::RecordSet",
+            "DependsOn": "Environment",
+            "Properties": {
+                "AliasTarget": {
+                    "DNSName": {
+                        "Fn::GetAtt": [
+                            "Environment",
+                            "EndpointURL"
+                        ]
+                    },
+                    "HostedZoneId": {
+                        "Fn::FindInMap": [
+                            "BeanstalkToALBHostedZoneId",
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            "HostedZoneId"
+                        ]
+                    }
+                },
+                "HostedZoneId": {
+                    "Ref": "R53HostedZoneID"
+                },
+                "Name": {
+                    "Fn::If": [
+                        "ConfigureAliasRec2",
+                        {
+                            "Fn::Select": [
+                                "2",
+                                {
+                                    "Fn::Split": [
+                                        ",",
+                                        {
+                                            "Ref": "R53AliasNames"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "Type": "A"
+            }
+        },
+        "RecordSet3": {
+            "Condition": "ConfigureRoute53",
+            "Type": "AWS::Route53::RecordSet",
+            "DependsOn": "Environment",
+            "Properties": {
+                "AliasTarget": {
+                    "DNSName": {
+                        "Fn::GetAtt": [
+                            "Environment",
+                            "EndpointURL"
+                        ]
+                    },
+                    "HostedZoneId": {
+                        "Fn::FindInMap": [
+                            "BeanstalkToALBHostedZoneId",
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            "HostedZoneId"
+                        ]
+                    }
+                },
+                "HostedZoneId": {
+                    "Ref": "R53HostedZoneID"
+                },
+                "Name": {
+                    "Fn::If": [
+                        "ConfigureAliasRec3",
+                        {
+                            "Fn::Select": [
+                                "3",
+                                {
+                                    "Fn::Split": [
+                                        ",",
+                                        {
+                                            "Ref": "R53AliasNames"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "Type": "A"
+            }
+        }
+    },
+    "Outputs": {
+        "AppURL": {
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Fn::GetAtt": [
+                                "Environment",
+                                "EndpointURL"
+                            ]
+                        },
+                        "/"
+                    ]
+                ]
+            },
+            "Description": "URL for the working  application"
+        },
+        "Application": {
+            "Value": {
+                "Ref": "ApplicationName"
+            }
+        },
+        "ConfigurationTemplate": {
+            "Value": {
+                "Ref": "ConfigurationTemplate"
+            },
+            "Description": "The Elastic Beanstalk configuration"
+        },
+        "Environment": {
+            "Value": {
+                "Ref": "Environment"
+            },
+            "Description": "The Elastic Beanstalk environment on which the application runs"
+        }
+    },
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Ownership"
+                    },
+                    "Parameters": [
+                        "Owner",
+                        "Project",
+                        "DeleteAfter"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Application Configurations"
+                    },
+                    "Parameters": [
+                        "CreateApplication",
+                        "ApplicationName",
+                        "EnvironmentName",
+                        "SolutionStackName",
+                        "S3Bucket",
+                        "S3Key"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Instance & ELB Parameters"
+                    },
+                    "Parameters": [
+                        "EC2NewName",
+                        "AMIID",
+                        "IAMInstanceProfile",
+                        "EC2KeyName",
+                        "SSLCertificateARN",
+                        "InstanceSecurityGroupNames",
+                        "ELBSecurityGroupNames"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Network Parameters"
+                    },
+                    "Parameters": [
+                        "VPCID",
+                        "DMZSubnets",
+                        "PublicOrPrivateSubnets"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Route53 Parameters"
+                    },
+                    "Parameters": [
+                        "ConfigureDns",
+                        "R53AliasNames",
+                        "R53HostedZoneID"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "Owner": {
+                    "default": "Team or Individual Owner"
+                },
+                "DeleteAfter": {
+                    "default": "Delete After Date"
+                },
+                "ApplicationName": {
+                    "default": "Application"
+                },
+                "EnvironmentName": {
+                    "default": "Environment"
+                },
+                "SolutionStackName": {
+                    "default": "Solution Stack"
+                },
+                "EC2KeyName": {
+                    "default": "EC2 Key Pair"
+                },
+                "EC2NewName": {
+                    "default": "EC2 New Name"
+                },
+                "VPCStackName": {
+                    "default": "VPC Stack Name"
+                },
+                "BastionStackName": {
+                    "default": "Bastion Host Stack Name"
+                },
+                "VPCID": {
+                    "default": "VPC Id"
+                },
+                "DMZSubnets": {
+                    "default": "DMZ Subnets"
+                },
+                "PublicOrPrivateSubnets": {
+                    "default": "Public Subnets"
+                },
+                "CreateApplication": {
+                    "default": "Create Application"
+                },
+                "AMIID": {
+                    "default": "AMI Id"
+                },
+                "IAMInstanceProfile": {
+                    "default": "IAM Instance Profile"
+                },
+                "SSLCertificateARN": {
+                    "default": "SSL ARN"
+                },
+                "InstanceSecurityGroupNames": {
+                    "default": "EC2 SG Names"
+                },
+                "ELBSecurityGroupNames": {
+                    "default": "ELB SG Names"
+                }
+            }
+        }
+    }
+}

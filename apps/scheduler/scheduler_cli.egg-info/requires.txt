@@ -1,0 +1,4 @@
+argparse
+requests>=2.18.4
+jmespath>=0.9.3
+boto3>=1.4.7

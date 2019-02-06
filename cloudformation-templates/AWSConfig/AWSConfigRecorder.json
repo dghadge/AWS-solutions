@@ -1,0 +1,66 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Deploy AWS Config",
+    "Parameters": {
+        "S3BucketName": {
+            "Description": "Name of the bucket to CREATE to save the AWS Config logs to",
+            "Type": "String",
+            "Default": "ifi-awsconfig"
+        }
+    },
+    "Resources": {
+        "ConfigRecorder": {
+            "Type": "AWS::Config::ConfigurationRecorder",
+            "Properties": {
+                "Name": {
+                    "Ref": "AWS::AccountId"
+                },
+                "RecordingGroup": {
+                    "AllSupported": true,
+                    "IncludeGlobalResourceTypes": true
+                },
+                "RoleARN": {
+                    "Fn::GetAtt": [
+                        "AWSConfigRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+        "AWSConfigRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "config.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
+                ]
+            }
+        },
+        "DeliveryChannel": {
+            "Type": "AWS::Config::DeliveryChannel",
+            "Properties": {
+                "ConfigSnapshotDeliveryProperties": {
+                    "DeliveryFrequency": "Three_Hours"
+                },
+                "S3BucketName": {
+                    "Ref": "S3BucketName"
+                }
+            }
+        }
+    }
+}

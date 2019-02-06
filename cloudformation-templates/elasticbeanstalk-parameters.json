@@ -1,0 +1,62 @@
+[
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Dan Ghadge"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "PIQ Development"
+  },
+  {
+    "ParameterKey": "DeleteAfter",
+    "ParameterValue": "Never"
+  },
+  {
+    "ParameterKey": "EC2KeyName",
+    "ParameterValue": "dangahdge-gov-useast-1"
+  },
+  {
+    "ParameterKey": "CreateApplication",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "PIQ"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "PIQ-webserver"
+  },
+  {
+    "ParameterKey": "S3Bucket",
+    "ParameterValue": "piq-dev-assets"
+  },
+  {
+    "ParameterKey": "S3Key",
+    "ParameterValue": "WebSites/ks-dev-ws-investmentscorecard.com.zip"
+  },
+  {
+    "ParameterKey": "SolutionStackName",
+    "ParameterValue": "64bit Windows Server 2012 v1.2.0 running IIS 10.0"
+  },
+  {
+    "ParameterKey": "AMIID",
+    "ParameterValue": "ami-c951acb4"
+  },
+  {
+    "ParameterKey": "DMZSubnets",
+    "ParameterValue": "subnet-cf4627e0,subnet-ea644aa1"
+  },
+  {
+    "ParameterKey": "PublicSubnets",
+    "ParameterValue": "subnet-4d7c1d62,subnet-f67856bd"
+  },
+  {
+    "ParameterKey": "VPCCidrBlock",
+    "ParameterValue": "10.170.4.0/22"
+  },
+  {
+    "ParameterKey": "VPCID",
+    "ParameterValue": "vpc-e69a989e"
+  }
+]

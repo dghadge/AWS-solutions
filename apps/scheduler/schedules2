@@ -1,0 +1,69 @@
+{
+   "Schedules": [
+      {
+         "OverrideStatus": "running", 
+         "Type": "schedule", 
+         "Description": "Instances running", 
+         "UseMetrics": false, 
+         "Name": "running"
+      }, 
+      {
+         "Timezone": "UTC", 
+         "Name": "scale-up-down", 
+         "Type": "schedule", 
+         "Description": "Vertical scaling on weekdays, based on UTC time", 
+         "Periods": [
+            "working-days@t2.micro", 
+            "weekends@t2.nano"
+         ]
+      }, 
+      {
+         "Timezone": "US/Pacific", 
+         "Name": "seattle-office-hours", 
+         "Type": "schedule", 
+         "Description": "Office hours in Seattle (Pacific)", 
+         "Periods": [
+            "office-hours"
+         ]
+      }, 
+      {
+         "OverrideStatus": "stopped", 
+         "Type": "schedule", 
+         "Description": "Instances stopped", 
+         "UseMetrics": false, 
+         "Name": "stopped"
+      }, 
+      {
+         "RetainRunning": false, 
+         "Enforced": false, 
+         "Name": "tn-web-office-hours", 
+         "StopNewInstances": true, 
+         "Periods": [
+            "tn-wednesdays", 
+            "tn-nonwednesdays"
+         ], 
+         "Timezone": "US/Central", 
+         "Type": "schedule"
+      }, 
+      {
+         "Timezone": "Europe/London", 
+         "Name": "uk-office-hours", 
+         "Type": "schedule", 
+         "Description": "Office hours in UK", 
+         "Periods": [
+            "office-hours"
+         ]
+      }, 
+      {
+         "RetainRunning": false, 
+         "Enforced": false, 
+         "Name": "wp-office-hours-schedule", 
+         "StopNewInstances": true, 
+         "Periods": [
+            "wp-office-hours"
+         ], 
+         "Timezone": "US/Eastern", 
+         "Type": "schedule"
+      }
+   ]
+}

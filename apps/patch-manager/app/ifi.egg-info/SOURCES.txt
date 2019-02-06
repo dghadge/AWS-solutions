@@ -1,0 +1,7 @@
+ifi.py
+ifi.egg-info/PKG-INFO
+ifi.egg-info/SOURCES.txt
+ifi.egg-info/dependency_links.txt
+ifi.egg-info/entry_points.txt
+ifi.egg-info/requires.txt
+ifi.egg-info/top_level.txt

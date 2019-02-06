@@ -1,0 +1,195 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Automate handling AWS Trusted Advisor cost warnings & errors",
+    "Resources": {
+        "EC2RDSEventsRule": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+                "Description": "Trigger Lambda a function anytime a new Trusted Advisor event is triggered for cost related warnings/errors",
+                "EventPattern": {
+                    "source": [
+                        "aws.trustedadvisor"
+                    ],
+                    "detail-type": [
+                        "Trusted Advisor Check Item Refresh Notification"
+                    ],
+                    "detail": {
+                        "status": [
+                            "ERROR",
+                            "WARN"
+                        ],
+                        "check-name": [
+                            "Low Utilization Amazon EC2 Instances",
+                            "Amazon RDS Idle DB Instances",
+                            "Underutilized Amazon EBS Volumes",
+                            "Unassociated Elastic IP Addresses"
+                        ]
+                    }
+                },
+                "Name": "Low-Utilized-EC2-RDS-Resources-Event",
+                "State": "ENABLED",
+                "Targets": [
+                    {
+                        "Arn": {
+                            "Fn::GetAtt": [
+                                "ApplyTagForLowUtilizationResourcesFunction",
+                                "Arn"
+                            ]
+                        },
+                        "Id": "Production"
+                    }
+                ]
+            }
+        },
+        "ApplyTagForLowUtilizationResourcesFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Description": "This function handles resources in response to Cloudwatch Events.",
+                "Handler": "index.lambda_handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python2.7",
+                "Timeout": "60",
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "import boto3\n",
+                                "import logging\n",
+                                "logger = logging.getLogger()\n",
+                                "logger.setLevel(logging.INFO)\n",
+                                "\n",
+                                "def lambda_handler(trustedAdvisorEvent, context):\n",
+                                "\n",
+                                "    try:\n",
+                                "        logger.info(trustedAdvisorEvent)\n",
+                                "        eventDetail = trustedAdvisorEvent['detail']\n",
+                                "        eventName = eventDetail['check-name'] \n",
+                                "\n",
+                                "        if eventName == 'Low Utilization Amazon EC2 Instances':\n",
+                                "            ec2 = boto3.client('ec2')\n",
+                                "            instanceId = eventDetail['check-item-detail']['Instance ID']\n",
+                                "            logger.info('Tagging EC2 Instance : '+instanceId)\n",
+                                "            ec2.create_tags(Resources=[instanceId], Tags=[{'Key': 'Schedule', 'Value': 'stopped'}])\n",
+                                "        \n",
+                                "        elif eventName == 'Amazon RDS Idle DB Instances':\n",
+                                "            rds = boto3.client('rds')\n",
+                                "            rdsInstanceId = eventDetail['resource_id']\n",
+                                "            logger.info('Tagging RDS Instance : '+rdsInstanceId)\n",
+                                "            rds.add_tags_to_resource(ResourceName=[rdsInstanceId], Tags=[{'Key': 'Schedule', 'Value': 'stopped'}])\n",
+                                "\n",
+                                "        elif eventName == 'Underutilized Amazon EBS Volumes':        \n",
+                                "            ec2 = boto3.resource('ec2')\n",
+                                "            volumeId = eventDetail['check-item-detail']['Volume ID']\n",
+                                "            volume = ec2.Volume(volumeId)\n",
+                                "            if  volume.state=='available':\n",
+                                "                logger.info('Creating snapshot for volumeId : '+volumeId)\n",
+                                "                snapshot = volume.create_snapshot(Description='Snapshot created in response to TrustedAdvisor event')\n",
+                                "                snapshot.create_tags(Tags=volume.tags)\n",
+                                "                logger.info('Deleting volumeId : '+volumeId)\n",
+                                "                volume.delete()\n",
+                                "\n",
+                                "        elif eventName == 'Unassociated Elastic IP Addresses':\n",
+                                "            ec2 = boto3.client('ec2')\n",
+                                "            unassociatedEIP = eventDetail['check-item-detail']['IP Address']\n",
+                                "            addresses = ec2.describe_addresses(PublicIps=[unassociatedEIP])\n",
+                                "            eipAllocationId = addresses['Addresses'][0]['AllocationId']\n",
+                                "            logger.info('Releasing Elastic IP Address : '+ unassociatedEIP)\n",
+                                "            ec2.release_address(AllocationId=eipAllocationId)\n",
+                                "\n",
+                                "        return True\n",
+                                "    except Exception as e:\n",
+                                "        logger.error('Error: ' + str(e))\n",
+                                "        return False\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "LambdaInvokePermission": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "FunctionName": {
+                    "Ref": "ApplyTagForLowUtilizationResourcesFunction"
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "events.amazonaws.com",
+                "SourceArn": {
+                    "Fn::GetAtt": [
+                        "EC2RDSEventsRule",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+        "LambdaRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Policies": [
+                    {
+                        "PolicyName": "LambdaRoleForEC2UntaggedAlert",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Sid": "lambdaPolicySet1",
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:CreateTags",
+                                        "ec2:DeleteVolume",
+                                        "ec2:CreateSnapshot",
+                                        "rds:StopDBInstance",
+                                        "rds:AddTagsToResource",
+                                        "rds:ListTagsForResource"
+                                    ],
+                                    "Resource": [
+                                        "arn:aws:ec2:*:*:instance/*",
+                                        "arn:aws:ec2:*::snapshot/*",
+                                        "arn:aws:ec2:*:*:volume/*",
+                                        "arn:aws:rds:*:*:db:*"
+                                    ]
+                                },
+                                {
+                                    "Sid": "lambdaPolicySet2",
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:ReleaseAddress",
+                                        "ec2:DescribeAddresses",
+                                        "ec2:DescribeTags",
+                                        "ec2:DescribeVolumes",
+                                        "logs:CreateLogStream",
+                                        "logs:CreateLogGroup",
+                                        "logs:PutLogEvents"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

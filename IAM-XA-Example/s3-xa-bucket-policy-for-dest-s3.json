@@ -1,0 +1,46 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AWSCloudTrailGetAclGetBucket",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::123456789012:root",
+                    "arn:aws:iam::345678764567:root",
+                    "arn:aws:iam::453234567893:root",
+                    "arn:aws:iam::232345678953:root"
+                ]
+            },
+            "Action": [
+                "s3:GetBucketAcl",
+                "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::applogs"
+        },
+        {
+            "Sid": "AWSCloudTrailPutObject",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::123456789012:root",
+                    "arn:aws:iam::345678764567:root",
+                    "arn:aws:iam::453234567893:root",
+                    "arn:aws:iam::232345678953:root"
+                ]
+            },
+            "Action": "s3:PutObject",
+            "Resource": [
+                "arn:aws:s3:::applogs/ACCOUNTNAME-1/*",
+                "arn:aws:s3:::applogs/ACCOUNTNAME-2/*",
+                "arn:aws:s3:::applogs/ACCOUNTNAME-3/*",
+                "arn:aws:s3:::applogs/ACCOUNTNAME-4/*"
+            ],
+            "Condition": {
+                "StringEquals": {
+                    "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+            }
+        }
+    ]
+}

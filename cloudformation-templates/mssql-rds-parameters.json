@@ -1,0 +1,98 @@
+[
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Dan Ghadge"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "Informagic RDS"
+  },
+  {
+    "ParameterKey": "DeleteAfter",
+    "ParameterValue": "Never"
+  },
+  {
+    "ParameterKey": "MasterUsername",
+    "ParameterValue": "superman"
+  },
+  {
+    "ParameterKey": "MasterUserPassword",
+    "ParameterValue": "Kryptonite"
+  },
+  {
+    "ParameterKey": "OptionGroupIAMRole",
+    "ParameterValue": "arn:aws:iam::912667018957:role/service-role/informagic-rds-option-group"
+  },
+  {
+    "ParameterKey": "BackupRetentionPeriod",
+    "ParameterValue": "30"
+  },
+  {
+    "ParameterKey": "MultiAvailabilityZone",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "TcpPort",
+    "ParameterValue": "1433"
+  },
+  {
+    "ParameterKey": "ConfigureDns",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "Cname",
+    "ParameterValue": "informagic.justice.league.com"
+  },
+  {
+    "ParameterKey": "R53HostedZoneName",
+    "ParameterValue": "league.com"
+  },
+  {
+    "ParameterKey": "AlertSnsTopicArn",
+    "ParameterValue": "arn:aws:sns:us-east-1:912667018957:RDSNotifications"
+  },
+  {
+    "ParameterKey": "AllocatedStorage",
+    "ParameterValue": "200"
+  },
+  {
+    "ParameterKey": "PreferredBackupWindow",
+    "ParameterValue": "17:00-19:00"
+  },
+  {
+    "ParameterKey": "PreferredMaintenanceWindow",
+    "ParameterValue": "Sun:19:00-Sun:23:00"
+  },
+  {
+    "ParameterKey": "ConfigureProvisionedIops",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "SnapshotOnDelete",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "SetupAlarms",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "ProvisionedIopsValue",
+    "ParameterValue": "1000"
+  },
+  {
+    "ParameterKey": "InstanceType",
+    "ParameterValue": "db.m4.large"
+  },
+  {
+    "ParameterKey": "InstanceSecurityGroup",
+    "ParameterValue": "sg-2d951b5a"
+  },
+  {
+    "ParameterKey": "VPCID",
+    "ParameterValue": "vpc-00040678"
+  },
+  {
+    "ParameterKey": "PrivateSubnets",
+    "ParameterValue": "subnet-fff2ddb4,subnet-3766fc6a"
+  }
+]

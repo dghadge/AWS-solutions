@@ -1,0 +1,26 @@
+[
+    {
+        "ParameterKey": "Owner",
+        "ParameterValue": "Greg Knox"
+    },
+    {
+        "ParameterKey": "Project",
+        "ParameterValue": "SES Bounce Recorder"
+    },
+    {
+        "ParameterKey": "DeleteAfter",
+        "ParameterValue": "Never"
+    },
+    {
+        "ParameterKey": "Environment",
+        "ParameterValue": "Development"
+    },
+    {
+        "ParameterKey": "CostCode",
+        "ParameterValue": "US028"
+    },
+    {
+        "ParameterKey": "LegalEntity",
+        "ParameterValue": "IIS"
+    }
+]

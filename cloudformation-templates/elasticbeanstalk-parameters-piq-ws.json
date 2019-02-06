@@ -1,0 +1,90 @@
+[
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Dan Ghadge"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "PIQ Development"
+  },
+  {
+    "ParameterKey": "DeleteAfter",
+    "ParameterValue": "Never"
+  },
+  {
+    "ParameterKey": "CreateApplication",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "PIQDev"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "PIQDev-ws"
+  },
+  {
+    "ParameterKey": "SolutionStackName",
+    "ParameterValue": "64bit Windows Server 2012 R2 v1.2.0 running IIS 8.5"
+  },
+  {
+    "ParameterKey": "S3Bucket",
+    "ParameterValue": "piq-dev-assets"
+  },
+  {
+    "ParameterKey": "S3Key",
+    "ParameterValue": "WebSites/seedjob-ws.zip"
+  },
+  {
+    "ParameterKey": "AMIID",
+    "ParameterValue": "ami-093130f18a44ea88c"
+  },
+  {
+    "ParameterKey": "IAMInstanceProfile",
+    "ParameterValue": "aws-elasticbeanstalk-ec2-role"
+  },
+  {
+    "ParameterKey": "EC2KeyName",
+    "ParameterValue": "danghadge-fidev-useast-1"
+  },
+  {
+    "ParameterKey": "EC2NewName",
+    "ParameterValue": "uefipiqdevws35"
+  },
+  {
+    "ParameterKey": "SSLCertificateARN",
+    "ParameterValue": "arn:aws:acm:us-east-1:401379558703:certificate/e184c8d8-1b00-49c7-80ee-b9e4b8b8d17a"
+  },
+  {
+    "ParameterKey": "InstanceSecurityGroupNames",
+    "ParameterValue": "sg-f3ea7f84, sg-799ada0e, sg-44431333"
+  },
+  {
+    "ParameterKey": "ELBSecurityGroupNames",
+    "ParameterValue": "sg-a6fd82d0"
+  },
+  {
+    "ParameterKey": "DMZSubnets",
+    "ParameterValue": "subnet-cf4627e0,subnet-ea644aa1,subnet-bc1471e1"
+  },
+  {
+    "ParameterKey": "PublicOrPrivateSubnets",
+    "ParameterValue": "subnet-4d7c1d62,subnet-f67856bd,subnet-ec0164b1"
+  },
+  {
+    "ParameterKey": "VPCID",
+    "ParameterValue": "vpc-e69a989e"
+  },
+  {
+    "ParameterKey": "R53HostedZoneID",
+    "ParameterValue": "Z1T0ODV2G93O3E"
+  },
+  {
+    "ParameterKey": "ConfigureDns",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "R53AliasNames",
+    "ParameterValue": "ciq-ks-dev.op.informais.com,piq-ks-dev.op.informais.com,ciq-pfp-dev.op.informais.com,piq-pfp-dev.op.informais.com"
+  }
+]

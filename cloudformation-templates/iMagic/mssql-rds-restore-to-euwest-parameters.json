@@ -1,0 +1,78 @@
+[
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Dan Ghadge"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "Informagic RDS"
+  },
+  {
+    "ParameterKey": "DeleteAfter",
+    "ParameterValue": "Never"
+  },
+  {
+    "ParameterKey": "DBSnapshotIdentifier",
+    "ParameterValue": "imagicrestored"
+  },
+  {
+    "ParameterKey": "MasterUsername",
+    "ParameterValue": "superman"
+  },
+  {
+    "ParameterKey": "MasterUserPassword",
+    "ParameterValue": "superpass"
+  },
+  {
+    "ParameterKey": "BackupRetentionPeriod",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "MultiAvailabilityZone",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "TcpPort",
+    "ParameterValue": "1433"
+  },
+  {
+    "ParameterKey": "DatabaseSNSNotification",
+    "ParameterValue": "arn:aws:sns:eu-west-1:401379558703:RDSNotifications"
+  },
+  {
+    "ParameterKey": "AllocatedStorage",
+    "ParameterValue": "1000"
+  },
+  {
+    "ParameterKey": "PreferredBackupWindow",
+    "ParameterValue": "17:00-19:00"
+  },
+  {
+    "ParameterKey": "PreferredMaintenanceWindow",
+    "ParameterValue": "Sun:19:00-Sun:23:00"
+  },
+  {
+    "ParameterKey": "ConfigureProvisionedIops",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "SnapshotOnDelete",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "SetupAlarms",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "ProvisionedIopsValue",
+    "ParameterValue": "1000"
+  },
+  {
+    "ParameterKey": "VPCID",
+    "ParameterValue": "vpc-a4f00ec2"
+  },
+  {
+    "ParameterKey": "PrivateSubnets",
+    "ParameterValue": "subnet-7101242a,subnet-7ab6af1d"
+  }
+]

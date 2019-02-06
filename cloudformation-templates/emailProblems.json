@@ -1,0 +1,310 @@
+{
+    "Description": "Template to deploy a solution to log email problems - complaints and bounces in DynamoDB.",
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "Owner": {
+            "Description": "Enter Team or Individual Name Responsible for the Stack.",
+            "Type": "String",
+            "Default": "FirstName LastName"
+        },
+        "Project": {
+            "Description": "Enter Project Name.",
+            "Type": "String",
+            "Default": "IFI Development"
+        },
+        "DeleteAfter": {
+            "Description": "Enter Date (MM/DD/YYYY). It's Ok to Delete the Stack or 'Never' if meant to be persistent.",
+            "Type": "String",
+            "Default": "00/00/201x"
+        },
+        "Environment": {
+            "Description": "Environment : Development, Production, PreProd, QA, DR, Test",
+            "Type": "String",
+            "AllowedValues": [
+                "Development",
+                "Production",
+                "PreProd",
+                "QA",
+                "DR",
+                "Test"
+            ],
+            "Default": "Development"
+        },
+        "CostCode": {
+            "Description": "Informa Costing Code",
+            "Type": "String",
+            "Default": "US028"
+        },
+        "LegalEntity": {
+            "Description": "Legal Entity",
+            "Type": "String",
+            "Default": "IIS"
+        }
+    },
+    "Resources": {
+        "DynamoDBTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+                "AttributeDefinitions": [
+                    {
+                        "AttributeName": "UserId",
+                        "AttributeType": "S"
+                    }
+                ],
+                "KeySchema": [
+                    {
+                        "AttributeName": "UserId",
+                        "KeyType": "HASH"
+                    }
+                ],
+                "ProvisionedThroughput": {
+                    "ReadCapacityUnits": "5",
+                    "WriteCapacityUnits": "5"
+                },
+                "TableName": "emailProblems",
+                "Tags": [
+                    {
+                        "Key": "Owner",
+                        "Value": {
+                            "Ref": "Owner"
+                        }
+                    },
+                    {
+                        "Key": "Project",
+                        "Value": {
+                            "Ref": "Project"
+                        }
+                    },
+                    {
+                        "Key": "DeleteAfter",
+                        "Value": {
+                            "Ref": "DeleteAfter"
+                        }
+                    },
+                    {
+                        "Key": "CostCode",
+                        "Value": {
+                            "Ref": "CostCode"
+                        }
+                    },
+                    {
+                        "Key": "LegalEntity",
+                        "Value": {
+                            "Ref": "LegalEntity"
+                        }
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": {
+                            "Ref": "Environment"
+                        }
+                    }
+                ]
+            }
+        },
+        "HandleEmailBouncesFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "'use strict';\n",
+                                "console.log('Loading function');\n",
+                                "let doc = require('dynamodb-doc');\n",
+                                "let dynamo = new doc.DynamoDB();\n",
+                                "let tableName = 'emailProblems';\n",
+                                "\n",
+                                "exports.handler = (event, context, callback) => {\n",
+                                "    const message = JSON.parse(event.Records[0].Sns.Message);\n",
+                                "    switch (message.notificationType) {\n",
+                                "        case \"Bounce\":\n",
+                                "            handleBounce(message);\n",
+                                "            break;\n",
+                                "        case \"Complaint\":\n",
+                                "            handleComplaint(message);\n",
+                                "            break;\n",
+                                "        default:\n",
+                                "            callback(\"Unknown notification type: \" + message.notificationType);\n",
+                                "    }\n",
+                                "};\n",
+                                "\n",
+                                "function handleBounce(message) {\n",
+                                "    const messageId = message.mail.messageId;\n",
+                                "    const addresses = message.bounce.bouncedRecipients.map(function (recipient) {\n",
+                                "        return recipient.emailAddress;\n",
+                                "    });\n",
+                                "    const bounceType = message.bounce.bounceType;\n",
+                                "    console.log(\"Message \" + messageId + \" bounced when sending to \" + addresses.join(\", \") + \". Bounce type: \" + bounceType);\n",
+                                "    for (var i = 0; i < addresses.length; i++) {\n",
+                                "        writeDDB(addresses[i], message, tableName, \"disable\");\n",
+                                "    }\n",
+                                "}\n",
+                                "\n",
+                                "function handleComplaint(message) {\n",
+                                "    const messageId = message.mail.messageId;\n",
+                                "    const addresses = message.complaint.complainedRecipients.map(function (recipient) {\n",
+                                "        return recipient.emailAddress;\n",
+                                "    });\n",
+                                "    console.log(\"A complaint was reported by \" + addresses.join(\", \") + \" for message \" + messageId + \".\");\n",
+                                "    for (var i = 0; i < addresses.length; i++) {\n",
+                                "        writeDDB(addresses[i], message, tableName, \"disable\");\n",
+                                "    }\n",
+                                "}\n",
+                                "\n",
+                                "function writeDDB(id, payload, tableName, status) {\n",
+                                "    const item = {\n",
+                                "        UserId: id,\n",
+                                "        notificationType: payload.notificationType,\n",
+                                "        from: payload.mail.source,\n",
+                                "        timestamp: payload.mail.timestamp\n",
+                                "        //,state: status\n",
+                                "    };\n",
+                                "    const params = {\n",
+                                "        TableName: tableName,\n",
+                                "        Item: item\n",
+                                "    };\n",
+                                "    dynamo.putItem(params, function (err, data) {\n",
+                                "        if (err)\n",
+                                "            console.log(err);\n",
+                                "        else\n",
+                                "            console.log(data);\n",
+                                "    });\n",
+                                "}\n"
+                            ]
+                        ]
+                    }
+                },
+                "Runtime": "nodejs4.3",
+                "Timeout": "5"
+            }
+        },
+        "SNSTopic": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+                "Subscription": [
+                    {
+                        "Endpoint": {
+                            "Fn::GetAtt": [
+                                "HandleEmailBouncesFunction",
+                                "Arn"
+                            ]
+                        },
+                        "Protocol": "lambda"
+                    }
+                ]
+            },
+            "DependsOn": [
+                "HandleEmailBouncesFunction"
+            ]
+        },
+        "LambdaInvokePermission": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "Principal": "sns.amazonaws.com",
+                "SourceArn": {
+                    "Ref": "SNSTopic"
+                },
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "HandleEmailBouncesFunction",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "lambdaExecutionPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Sid": "",
+                                    "Action": [
+                                        "dynamodb:PutItem",
+                                        "dynamodb:UpdateItem"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": {
+                                        "Fn::GetAtt": [
+                                            "DynamoDBTable",
+                                            "Arn"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "Sid": "",
+                                    "Resource": "*",
+                                    "Action": [
+                                        "logs:CreateLogGroup",
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents"
+                                    ],
+                                    "Effect": "Allow"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Ownership"
+                    },
+                    "Parameters": [
+                        "Owner",
+                        "Project",
+                        "DeleteAfter",
+                        "CostCode",
+                        "LegalEntity",
+                        "Environment"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "Owner": {
+                    "default": "Team or Individual Owner"
+                },
+                "Project": {
+                    "default": "Project name"
+                },
+                "DeleteAfter": {
+                    "default": "Delete After Date"
+                }
+            }
+        }
+    }
+}

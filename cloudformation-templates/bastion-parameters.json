@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Dan Ghadge"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "PSNDev"
+  },
+  {
+    "ParameterKey": "DeleteAfter",
+    "ParameterValue": "Never"
+  },
+  {
+    "ParameterKey": "Ec2KeyPair",
+    "ParameterValue": "danghadge-fidev-useast-1"
+  },
+  {
+    "ParameterKey": "PrivateSubnets",
+    "ParameterValue": "subnet-29482906,subnet-7776583c"
+  },
+  {
+    "ParameterKey": "VPCID",
+    "ParameterValue": "vpc-e69a989e"
+  }
+]

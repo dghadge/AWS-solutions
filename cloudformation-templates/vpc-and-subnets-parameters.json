@@ -1,0 +1,50 @@
+[
+    {
+        "ParameterKey": "Owner",
+        "ParameterValue": "Dan Ghadge"
+    },
+    {
+        "ParameterKey": "Project",
+        "ParameterValue": "Research: DO NOT MODIFY"
+    },
+    {
+        "ParameterKey": "DeleteAfter",
+        "ParameterValue": "Never"
+    },
+    {
+        "ParameterKey": "VPCSubnetCidrBlock",
+        "ParameterValue": "172.16.40.0/21"
+    },
+    {
+        "ParameterKey": "AvailabilityZone1",
+        "ParameterValue": "a"
+    },
+    {
+        "ParameterKey": "AvailabilityZone2",
+        "ParameterValue": "b"
+    },
+    {
+        "ParameterKey": "PublicSubnetCidrBlock1",
+        "ParameterValue": "172.16.41.0/24"
+    },
+    {
+        "ParameterKey": "PublicSubnetCidrBlock2",
+        "ParameterValue": "172.16.42.0/24"
+    },
+    {
+        "ParameterKey": "PrivateSubnetCidrBlock1",
+        "ParameterValue": "172.16.43.0/24"
+    },
+    {
+        "ParameterKey": "PrivateSubnetCidrBlock2",
+        "ParameterValue": "172.16.44.0/24"
+    },
+    {
+        "ParameterKey": "PrivateSubnetCidrBlock3",
+        "ParameterValue": "172.16.45.0/24"
+    },
+    {
+        "ParameterKey": "PrivateSubnetCidrBlock4",
+        "ParameterValue": "172.16.46.0/24"
+    }
+]
