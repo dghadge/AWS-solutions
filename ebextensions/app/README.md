@@ -1,5 +1,5 @@
-# PIQ Migration
-###  Specific implementation of elastic beanstalk extentions for PIQ migration
+# App Migration
+###  Specific implementation of elastic beanstalk extentions for App migration
 
 ###  Important files and purpose
 #####  1. as-hook.config
