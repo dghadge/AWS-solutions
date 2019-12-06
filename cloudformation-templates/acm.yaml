@@ -1,0 +1,24 @@
+Parameters:
+  DomainName:
+    Description: Domain name to create SSL certificate for
+    Type: String
+    Default: "nationalcodingleague.com"
+
+Resources:
+  DomainCert:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      ValidationMethod: DNS
+      DomainName: !Ref 'DomainName'
+      DomainValidationOptions:
+        - DomainName: !Ref 'DomainName'
+          ValidationDomain: !Ref 'DomainName'
+      SubjectAlternativeNames:
+        - !Ref 'DomainName'
+    
+Outputs:
+  CertificateARN:
+    Description: Certificate ARN
+    Value: !Ref 'DomainCert'
+    Export:
+      Name: !Sub '${AWS::StackName}-ACM-ARN'
